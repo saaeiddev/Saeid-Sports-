@@ -9,6 +9,17 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
   <link rel="stylesheet" href="./styles.css" />
+  <style>
+    .sport-symbol-strip{position:fixed;z-index:18;left:50%;bottom:44px;transform:translateX(-50%);width:min(980px,78vw);display:flex;gap:10px;overflow-x:auto;padding:10px 12px 14px;scrollbar-width:none;perspective:900px;transition:.35s ease;mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
+    .sport-symbol-strip::-webkit-scrollbar{display:none}
+    .sport-symbol-strip.is-hidden{opacity:0;transform:translate(-50%,18px);pointer-events:none}
+    .sport-symbol{flex:0 0 68px;height:72px;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:linear-gradient(145deg,rgba(28,36,46,.88),rgba(6,9,13,.78));backdrop-filter:blur(14px);box-shadow:inset 0 1px rgba(255,255,255,.08),0 14px 34px rgba(0,0,0,.34);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:.22s ease;transform:translateZ(0) rotateX(4deg);color:#fff}
+    .sport-symbol:hover,.sport-symbol:focus-visible{transform:translateY(-6px) rotateX(0) scale(1.06);border-color:rgba(120,240,0,.52);box-shadow:0 18px 42px rgba(0,0,0,.45),0 0 22px rgba(120,240,0,.12)}
+    .sport-symbol .symbol-icon{font-size:28px;line-height:1;filter:drop-shadow(0 5px 9px rgba(0,0,0,.45));transform:translateZ(18px)}
+    .sport-symbol .symbol-name{font-size:7px;font-weight:800;letter-spacing:.08em;color:#aeb7c1;max-width:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sport-symbol[hidden]{display:none!important}
+    @media(max-width:900px){.sport-symbol-strip{left:12px;right:12px;bottom:18px;width:auto;transform:none;padding-left:4px;padding-right:4px;mask-image:linear-gradient(90deg,#000 92%,transparent);-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent)}.sport-symbol-strip.is-hidden{transform:translateY(16px)}.sport-symbol{flex-basis:62px;height:66px}.sport-symbol .symbol-icon{font-size:25px}}
+  </style>
   <script type="importmap">
     {
       "imports": {
@@ -88,6 +99,7 @@
     </div>
   </section>
 
+  <div id="sport-symbol-strip" class="sport-symbol-strip" aria-label="Sport symbols"></div>
   <div id="pointer-label" class="pointer-label" hidden></div>
 
   <section id="detail-panel" class="detail-panel" aria-live="polite" aria-hidden="true">
@@ -143,5 +155,56 @@
   </footer>
 
   <script type="module" src="./app.js"></script>
+  <script>
+    window.addEventListener('load',()=>{
+      const sports=[
+        ['Football','Team','⚽'],['Basketball','Team','🏀'],['Volleyball','Team','🏐'],
+        ['Tennis','Racket','🎾'],['Table Tennis','Racket','🏓'],['Badminton','Racket','🏸'],
+        ['Boxing','Combat','🥊'],['Martial Arts','Combat','🥋'],['Wrestling','Combat','🤼'],
+        ['Swimming','Water','🏊'],['Surfing','Water','🏄'],
+        ['Running','Individual','🏃'],['Cycling','Individual','🚴'],['Golf','Individual','⛳'],
+        ['Motorsport','Motorsport','🏎️'],['Gym / Bodybuilding','Strength','🏋️'],['Weightlifting','Strength','🏋️‍♂️'],
+        ['Baseball','Team','⚾'],['American Football','Team','🏈'],['Ice Hockey','Team','🏒'],
+        ['Skiing','Winter','⛷️'],['Snowboarding','Winter','🏂'],
+        ['Skateboarding','Extreme','🛹'],['Archery','Individual','🏹'],['Fencing','Combat','🤺'],['Climbing','Extreme','🧗']
+      ];
+      const strip=document.getElementById('sport-symbol-strip');
+      strip.innerHTML=sports.map(([name,category,icon])=>`<button class="sport-symbol" type="button" data-sport="${name.replace(/"/g,'&quot;')}" data-cat="${category}" aria-label="Open ${name}"><span class="symbol-icon">${icon}</span><span class="symbol-name">${name}</span></button>`).join('');
+
+      const chooseSport=(name)=>{
+        const input=document.getElementById('search-input');
+        if(!input)return;
+        input.value=name;
+        input.dispatchEvent(new Event('input',{bubbles:true}));
+        requestAnimationFrame(()=>{
+          const result=[...document.querySelectorAll('.search-result')].find(b=>b.dataset.name===name);
+          if(result)result.click();
+          input.value='';
+          input.dispatchEvent(new Event('input',{bubbles:true}));
+        });
+      };
+
+      strip.addEventListener('click',e=>{
+        const btn=e.target.closest('.sport-symbol');
+        if(btn)chooseSport(btn.dataset.sport);
+      });
+
+      document.querySelectorAll('.category-chip').forEach(chip=>{
+        chip.addEventListener('click',()=>{
+          const cat=chip.dataset.category;
+          strip.querySelectorAll('.sport-symbol').forEach(btn=>{
+            btn.hidden=cat!=='All'&&btn.dataset.cat!==cat;
+          });
+          strip.scrollTo({left:0,behavior:'smooth'});
+        });
+      });
+
+      const detail=document.getElementById('detail-panel');
+      if(detail){
+        new MutationObserver(()=>strip.classList.toggle('is-hidden',detail.classList.contains('open')))
+          .observe(detail,{attributes:true,attributeFilter:['class']});
+      }
+    });
+  </script>
 </body>
 </html>
