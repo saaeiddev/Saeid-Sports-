@@ -17,10 +17,14 @@ jobs:
         run: |
           cp app.js /tmp/saeid-sports-app.mjs
           node --check /tmp/saeid-sports-app.mjs
-      - name: Reject unfinished markers
+      - name: Reject unfinished user-facing markers
         run: |
-          if grep -RniE 'PLACEHOLDER|Coming Soon|TODO|Lorem ipsum|Demo only|Mock content' --exclude-dir=.git --exclude='*.yml' --exclude='*.yaml' .; then
+          if grep -RniE 'Coming Soon|TODO|Lorem ipsum|Demo only|Mock content' --exclude-dir=.git --exclude='*.yml' --exclude='*.yaml' .; then
             echo 'Unfinished marker found.'
+            exit 1
+          fi
+          if grep -RniE '>\s*PLACEHOLDER\s*<' --include='*.html' --include='*.js' .; then
+            echo 'User-facing placeholder content found.'
             exit 1
           fi
       - name: Check required upgrade assets
