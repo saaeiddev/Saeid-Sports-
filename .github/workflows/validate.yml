@@ -32,7 +32,10 @@ jobs:
           test -s app.js
           test -s styles.css
           test -s museum-upgrade.css
+          test -s ASSET_SOURCES.md
           grep -q 'Gallery' app.js
           grep -q 'Wikimedia Commons' app.js
-          grep -q 'equipment-inspector' app.js
+          grep -Eq 'equipment-inspector|model-viewer' app.js
+          grep -q 'GLTFLoader' app.js
+          grep -q 'cdn.3dassets.dev' app.js
           grep -q 'devicePixelRatio,mobile?1.1:1.5' app.js
