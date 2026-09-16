@@ -1,0 +1,34 @@
+name: Validate SAEID SPORTS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JavaScript syntax
+        run: |
+          cp app.js /tmp/saeid-sports-app.mjs
+          node --check /tmp/saeid-sports-app.mjs
+      - name: Reject unfinished markers
+        run: |
+          if grep -RniE 'PLACEHOLDER|Coming Soon|TODO|Lorem ipsum|Demo only|Mock content' --exclude-dir=.git --exclude='*.yml' --exclude='*.yaml' .; then
+            echo 'Unfinished marker found.'
+            exit 1
+          fi
+      - name: Check required upgrade assets
+        run: |
+          test -s app.js
+          test -s styles.css
+          test -s museum-upgrade.css
+          grep -q 'Gallery' app.js
+          grep -q 'Wikimedia Commons' app.js
+          grep -q 'equipment-inspector' app.js
+          grep -q 'devicePixelRatio,mobile?1.1:1.5' app.js
