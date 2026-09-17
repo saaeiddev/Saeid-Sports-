@@ -7,52 +7,204 @@
   <meta name="description" content="SAEID SPORTS — an immersive interactive 3D sports discovery arena." />
   <title>SAEID SPORTS — Explore the World of Sports</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://cdn.3dassets.dev" crossorigin>
-  <link rel="preconnect" href="https://commons.wikimedia.org" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
   <link rel="stylesheet" href="./styles.css" />
   <style>
     .sport-symbol-strip{position:fixed;z-index:18;left:50%;bottom:44px;transform:translateX(-50%);width:min(980px,78vw);display:flex;gap:10px;overflow-x:auto;padding:10px 12px 14px;scrollbar-width:none;perspective:900px;transition:.35s ease;mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
-    .sport-symbol-strip::-webkit-scrollbar{display:none}.sport-symbol-strip.is-hidden{opacity:0;transform:translate(-50%,18px);pointer-events:none}
+    .sport-symbol-strip::-webkit-scrollbar{display:none}
+    .sport-symbol-strip.is-hidden{opacity:0;transform:translate(-50%,18px);pointer-events:none}
     .sport-symbol{flex:0 0 68px;height:72px;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:linear-gradient(145deg,rgba(28,36,46,.88),rgba(6,9,13,.78));backdrop-filter:blur(14px);box-shadow:inset 0 1px rgba(255,255,255,.08),0 14px 34px rgba(0,0,0,.34);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:.22s ease;transform:translateZ(0) rotateX(4deg);color:#fff}
     .sport-symbol:hover,.sport-symbol:focus-visible{transform:translateY(-6px) rotateX(0) scale(1.06);border-color:rgba(120,240,0,.52);box-shadow:0 18px 42px rgba(0,0,0,.45),0 0 22px rgba(120,240,0,.12)}
     .sport-symbol .symbol-icon{font-size:28px;line-height:1;filter:drop-shadow(0 5px 9px rgba(0,0,0,.45));transform:translateZ(18px)}
-    .sport-symbol .symbol-name{font-size:7px;font-weight:800;letter-spacing:.08em;color:#aeb7c1;max-width:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sport-symbol[hidden]{display:none!important}
-    #sport-label-layer{position:fixed;inset:0;z-index:9;pointer-events:none;overflow:hidden}
-    .arena-label{position:absolute;transform:translate(-50%,-100%);padding:6px 9px;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:rgba(5,8,12,.7);backdrop-filter:blur(9px);box-shadow:0 7px 22px rgba(0,0,0,.28);font-size:8px;font-weight:800;letter-spacing:.12em;white-space:nowrap;transition:opacity .2s,transform .2s}
-    .arena-label small{display:block;margin-top:2px;color:#7f8993;font-size:6px;letter-spacing:.14em}.arena-label.active{border-color:rgba(120,240,0,.45);transform:translate(-50%,-110%) scale(1.05)}.arena-label.filtered{opacity:0}
-    .asset-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid rgba(255,255,255,.1);border-radius:999px;color:#8f99a3;font-size:7px;letter-spacing:.1em;margin-top:8px}.asset-badge i{width:5px;height:5px;border-radius:50%;background:#78f000;box-shadow:0 0 8px #78f000}
-    .visual-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.visual-card{overflow:hidden;border:1px solid rgba(255,255,255,.1);border-radius:15px;background:rgba(255,255,255,.025);min-width:0}
-    .visual-card-media{position:relative;aspect-ratio:4/3;background:radial-gradient(circle at 35% 30%,#23313f,#0a0e13);overflow:hidden}.visual-card-media img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .35s ease;filter:saturate(.9) contrast(1.04)}.visual-card:hover img{transform:scale(1.035)}
-    .visual-card-body{padding:11px}.visual-card b{display:block;font-size:10px;margin-bottom:5px}.visual-card p{margin:0;color:#7f8993;font-size:8px;line-height:1.45}.visual-card .view3d{margin-top:9px;border:1px solid rgba(120,240,0,.25);background:rgba(120,240,0,.07);border-radius:8px;padding:7px 9px;font-size:7px;font-weight:800;letter-spacing:.08em;cursor:pointer}
-    .image-credit{position:absolute;right:6px;bottom:6px;max-width:80%;padding:4px 6px;border-radius:6px;background:rgba(0,0,0,.62);font-size:6px;color:#b7c0c8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .gallery-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.gallery-tile{position:relative;aspect-ratio:4/3;border:1px solid rgba(255,255,255,.1);border-radius:13px;overflow:hidden;background:#0d1218;cursor:zoom-in;padding:0}.gallery-tile img{width:100%;height:100%;object-fit:cover;display:block}.gallery-tile span{position:absolute;left:9px;bottom:8px;padding:4px 6px;border-radius:6px;background:rgba(0,0,0,.55);font-size:7px;font-weight:800;letter-spacing:.1em}
-    .lightbox,.model-viewer-modal{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.82);backdrop-filter:blur(18px);display:grid;place-items:center;opacity:0;visibility:hidden;transition:.25s}.lightbox.open,.model-viewer-modal.open{opacity:1;visibility:visible}
-    .lightbox-shell{position:relative;width:min(1100px,92vw);height:min(78vh,760px);display:grid;place-items:center}.lightbox img{max-width:100%;max-height:100%;border-radius:18px;box-shadow:0 25px 90px rgba(0,0,0,.55)}.lightbox-close,.model-viewer-close{position:absolute;right:16px;top:16px;z-index:3}.lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border:1px solid rgba(255,255,255,.16);border-radius:50%;background:rgba(10,14,19,.78);cursor:pointer;font-size:22px}.lightbox-prev{left:8px}.lightbox-next{right:8px}
-    .model-viewer-shell{position:relative;width:min(960px,94vw);height:min(76vh,720px);border:1px solid rgba(255,255,255,.14);border-radius:24px;background:radial-gradient(circle at 50% 40%,#17212b,#070a0e 72%);overflow:hidden;box-shadow:0 30px 100px rgba(0,0,0,.55)}#equipment-canvas{width:100%;height:100%;display:block}.model-viewer-head{position:absolute;z-index:2;left:20px;top:18px;pointer-events:none}.model-viewer-head h3{margin:5px 0 0;font-family:Oswald,sans-serif;font-size:32px}.viewer-toolbar{position:absolute;z-index:2;left:20px;bottom:18px;display:flex;gap:8px}.viewer-toolbar button{border:1px solid rgba(255,255,255,.14);background:rgba(8,12,16,.72);border-radius:9px;padding:8px 11px;font-size:8px;cursor:pointer}.viewer-status{position:absolute;right:20px;bottom:20px;font-size:7px;color:#84909a;letter-spacing:.1em}
-    .context-recovery{position:fixed;z-index:150;left:50%;top:18px;transform:translateX(-50%);padding:9px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(10,14,19,.9);font-size:9px;letter-spacing:.08em}
-    @media(max-width:900px){.sport-symbol-strip{left:12px;right:12px;bottom:18px;width:auto;transform:none;padding-left:4px;padding-right:4px;mask-image:linear-gradient(90deg,#000 92%,transparent);-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent)}.sport-symbol-strip.is-hidden{transform:translateY(16px)}.sport-symbol{flex-basis:62px;height:66px}.sport-symbol .symbol-icon{font-size:25px}.arena-label{font-size:7px;padding:5px 7px}.visual-grid,.gallery-grid{grid-template-columns:1fr 1fr}.model-viewer-shell{height:70vh}.lightbox-shell{height:72vh}}
-    @media(max-width:560px){.visual-grid{grid-template-columns:1fr}.gallery-grid{grid-template-columns:1fr 1fr}.arena-label small{display:none}}
+    .sport-symbol .symbol-name{font-size:7px;font-weight:800;letter-spacing:.08em;color:#aeb7c1;max-width:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sport-symbol[hidden]{display:none!important}
+    @media(max-width:900px){.sport-symbol-strip{left:12px;right:12px;bottom:18px;width:auto;transform:none;padding-left:4px;padding-right:4px;mask-image:linear-gradient(90deg,#000 92%,transparent);-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent)}.sport-symbol-strip.is-hidden{transform:translateY(16px)}.sport-symbol{flex-basis:62px;height:66px}.sport-symbol .symbol-icon{font-size:25px}}
   </style>
   <script type="importmap">
-    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
   </script>
 </head>
 <body>
-  <div id="webgl-fallback" class="webgl-fallback" hidden><div class="fallback-card"><div class="brand-mark">SS</div><h1>SAEID SPORTS</h1><p>WebGL could not be initialized on this device. Try a recent version of Chrome, Safari, Firefox, or Edge and make sure hardware acceleration is enabled.</p></div></div>
-  <div id="loading" class="loading-screen" role="status" aria-live="polite"><div class="loading-rings" aria-hidden="true"><i></i><i></i><i></i></div><div class="loading-copy"><span class="eyebrow">WELCOME TO THE ARENA</span><h1>SAEID <strong>SPORTS</strong></h1><p id="loading-message">Loading critical arena assets…</p><div class="progress-track"><span id="progress-bar"></span></div><b id="progress-label">0%</b></div></div>
-  <div id="intro" class="intro" hidden><div class="intro-vignette"></div><div class="intro-copy"><span class="eyebrow">IMMERSIVE SPORTS DISCOVERY</span><h1>SAEID <strong>SPORTS</strong></h1><p>Explore the World of Sports</p><button id="enter-arena" class="primary-btn">Enter the Arena <span>↗</span></button><button id="skip-intro" class="text-btn">Skip intro</button></div></div>
-  <canvas id="scene" aria-label="Interactive 3D sports arena"></canvas><div id="sport-label-layer" aria-hidden="true"></div><div class="noise" aria-hidden="true"></div><div class="scanlines" aria-hidden="true"></div>
-  <header class="topbar"><a class="brand" href="#" aria-label="SAEID SPORTS home"><span class="brand-mark">SS</span><span><b>SAEID</b> SPORTS<small>MOVE. COMPETE. DISCOVER.</small></span></a><nav class="top-actions" aria-label="Main controls"><button id="open-search" class="icon-btn" aria-label="Search sports">⌕</button><button id="sound-toggle" class="icon-btn" aria-label="Toggle sound">◕</button><button id="help-toggle" class="icon-btn" aria-label="Show controls">?</button></nav></header>
-  <aside class="side-rail" aria-label="Sport categories"><div class="rail-line"></div><button class="category-chip active" data-category="All">ALL</button><button class="category-chip" data-category="Team">TEAM</button><button class="category-chip" data-category="Individual">INDIVIDUAL</button><button class="category-chip" data-category="Combat">COMBAT</button><button class="category-chip" data-category="Racket">RACKET</button><button class="category-chip" data-category="Water">WATER</button><button class="category-chip" data-category="Motorsport">MOTOR</button><button class="category-chip" data-category="Winter">WINTER</button><button class="category-chip" data-category="Strength">POWER</button><button class="category-chip" data-category="Extreme">EXTREME</button></aside>
-  <section id="hero-hud" class="hero-hud"><div class="hud-kicker"><span></span> INTERACTIVE SPORTS HALL</div><h2>CHOOSE YOUR <em>ARENA</em></h2><p>Move through the exhibition, identify each sport by its 3D display, then select it for equipment, clothing, rules, skills, facts and real-world imagery.</p><div class="hud-meta"><span><b id="sport-count">26</b> SPORTS</span><span><b>3D</b> REAL-TIME</span><span><b>CC0</b> WEB ASSETS</span></div></section>
-  <div id="sport-symbol-strip" class="sport-symbol-strip" aria-label="Sport symbols"></div><div id="pointer-label" class="pointer-label" hidden></div>
-  <section id="detail-panel" class="detail-panel" aria-live="polite" aria-hidden="true"><div class="detail-header"><div><span id="detail-category" class="eyebrow">TEAM SPORT</span><h2 id="detail-name">FOOTBALL</h2><span id="model-status" class="asset-badge"><i></i> 3D DISPLAY</span></div><button id="close-detail" class="close-btn" aria-label="Return to main arena">×</button></div><div class="tab-row" role="tablist"><button class="tab active" data-tab="overview" role="tab">Overview</button><button class="tab" data-tab="equipment" role="tab">Equipment</button><button class="tab" data-tab="clothing" role="tab">Clothing</button><button class="tab" data-tab="rules" role="tab">Rules</button><button class="tab" data-tab="skills" role="tab">Skills</button><button class="tab" data-tab="facts" role="tab">Facts</button><button class="tab" data-tab="gallery" role="tab">Gallery</button></div><div id="tab-content" class="tab-content"></div><div class="detail-footer"><button id="back-btn" class="secondary-btn">← Back to Hall</button><span>Drag to rotate • Wheel / pinch to zoom</span></div></section>
-  <section id="search-panel" class="search-panel" aria-hidden="true"><div class="search-shell"><div class="search-head"><div><span class="eyebrow">SPORT FINDER</span><h2>Find your arena</h2></div><button id="close-search" class="close-btn" aria-label="Close search">×</button></div><label class="search-box"><span>⌕</span><input id="search-input" type="search" placeholder="Football, boxing, tennis…" autocomplete="off" /></label><div id="search-results" class="search-results"></div></div></section>
-  <section id="help-panel" class="help-panel" aria-hidden="true"><button id="close-help" class="close-btn" aria-label="Close controls help">×</button><span class="eyebrow">CONTROLS</span><h2>Explore naturally.</h2><div class="help-grid"><div><b>Mouse / drag</b><span>Orbit the arena</span></div><div><b>Scroll / pinch</b><span>Zoom</span></div><div><b>Hover / tap</b><span>Identify a sport</span></div><div><b>Click</b><span>Enter the sport zone</span></div></div></section>
-  <div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-label="Sport gallery image"><div class="lightbox-shell"><button id="lightbox-close" class="close-btn lightbox-close" aria-label="Close gallery">×</button><button id="lightbox-prev" class="lightbox-nav lightbox-prev" aria-label="Previous image">‹</button><img id="lightbox-image" alt=""><button id="lightbox-next" class="lightbox-nav lightbox-next" aria-label="Next image">›</button></div></div>
-  <div id="model-viewer" class="model-viewer-modal" aria-hidden="true" role="dialog" aria-label="3D equipment inspector"><div class="model-viewer-shell"><button id="model-viewer-close" class="close-btn model-viewer-close" aria-label="Close 3D viewer">×</button><div class="model-viewer-head"><span class="eyebrow">EQUIPMENT INSPECTOR</span><h3 id="viewer-title">3D MODEL</h3></div><canvas id="equipment-canvas"></canvas><div class="viewer-toolbar"><button id="viewer-reset">Reset view</button></div><span id="viewer-status" class="viewer-status">READY</span></div></div>
-  <div id="context-recovery" class="context-recovery" hidden>3D renderer paused. Restoring the WebGL context…</div>
-  <footer class="footer-hud"><span>SAEID SPORTS © 2026</span><span id="status-text">ARENA ONLINE</span><span>WEBGL EXPERIENCE</span></footer>
+  <div id="webgl-fallback" class="webgl-fallback" hidden>
+    <div class="fallback-card">
+      <div class="brand-mark">SS</div>
+      <h1>SAEID SPORTS</h1>
+      <p>Your browser or device does not currently support WebGL. Please use a recent version of Chrome, Safari, Firefox, or Edge.</p>
+    </div>
+  </div>
+
+  <div id="loading" class="loading-screen" role="status" aria-live="polite">
+    <div class="loading-rings" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="loading-copy">
+      <span class="eyebrow">WELCOME TO THE ARENA</span>
+      <h1>SAEID <strong>SPORTS</strong></h1>
+      <p>Loading the Arena…</p>
+      <div class="progress-track"><span id="progress-bar"></span></div>
+      <b id="progress-label">0%</b>
+    </div>
+  </div>
+
+  <div id="intro" class="intro" hidden>
+    <div class="intro-vignette"></div>
+    <div class="intro-copy">
+      <span class="eyebrow">IMMERSIVE SPORTS DISCOVERY</span>
+      <h1>SAEID <strong>SPORTS</strong></h1>
+      <p>Explore the World of Sports</p>
+      <button id="enter-arena" class="primary-btn">Enter the Arena <span>↗</span></button>
+      <button id="skip-intro" class="text-btn">Skip intro</button>
+    </div>
+  </div>
+
+  <canvas id="scene" aria-label="Interactive 3D sports arena"></canvas>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="SAEID SPORTS home">
+      <span class="brand-mark">SS</span>
+      <span><b>SAEID</b> SPORTS<small>MOVE. COMPETE. DISCOVER.</small></span>
+    </a>
+    <nav class="top-actions" aria-label="Main controls">
+      <button id="open-search" class="icon-btn" aria-label="Search sports">⌕</button>
+      <button id="sound-toggle" class="icon-btn" aria-label="Toggle sound">◕</button>
+      <button id="help-toggle" class="icon-btn" aria-label="Show controls">?</button>
+    </nav>
+  </header>
+
+  <aside class="side-rail" aria-label="Sport categories">
+    <div class="rail-line"></div>
+    <button class="category-chip active" data-category="All">ALL</button>
+    <button class="category-chip" data-category="Team">TEAM</button>
+    <button class="category-chip" data-category="Combat">COMBAT</button>
+    <button class="category-chip" data-category="Racket">RACKET</button>
+    <button class="category-chip" data-category="Water">WATER</button>
+    <button class="category-chip" data-category="Motorsport">MOTOR</button>
+    <button class="category-chip" data-category="Winter">WINTER</button>
+    <button class="category-chip" data-category="Strength">POWER</button>
+  </aside>
+
+  <section id="hero-hud" class="hero-hud">
+    <div class="hud-kicker"><span></span> INTERACTIVE SPORTS HALL</div>
+    <h2>CHOOSE YOUR <em>ARENA</em></h2>
+    <p>Move through the exhibition, hover over a sport to wake it up, then select it to enter the dedicated experience.</p>
+    <div class="hud-meta">
+      <span><b id="sport-count">25</b> SPORTS</span>
+      <span><b>3D</b> REAL-TIME</span>
+      <span><b>01</b> DIGITAL ARENA</span>
+    </div>
+  </section>
+
+  <div id="sport-symbol-strip" class="sport-symbol-strip" aria-label="Sport symbols"></div>
+  <div id="pointer-label" class="pointer-label" hidden></div>
+
+  <section id="detail-panel" class="detail-panel" aria-live="polite" aria-hidden="true">
+    <div class="detail-header">
+      <div>
+        <span id="detail-category" class="eyebrow">TEAM SPORT</span>
+        <h2 id="detail-name">FOOTBALL</h2>
+      </div>
+      <button id="close-detail" class="close-btn" aria-label="Return to main arena">×</button>
+    </div>
+    <div class="tab-row" role="tablist">
+      <button class="tab active" data-tab="overview" role="tab">Overview</button>
+      <button class="tab" data-tab="equipment" role="tab">Equipment</button>
+      <button class="tab" data-tab="clothing" role="tab">Clothing</button>
+      <button class="tab" data-tab="rules" role="tab">Rules</button>
+      <button class="tab" data-tab="skills" role="tab">Skills</button>
+      <button class="tab" data-tab="facts" role="tab">Facts</button>
+    </div>
+    <div id="tab-content" class="tab-content"></div>
+    <div class="detail-footer">
+      <button id="back-btn" class="secondary-btn">← Back to Hall</button>
+      <span>Drag to rotate • Wheel / pinch to zoom</span>
+    </div>
+  </section>
+
+  <section id="search-panel" class="search-panel" aria-hidden="true">
+    <div class="search-shell">
+      <div class="search-head">
+        <div><span class="eyebrow">SPORT FINDER</span><h2>Find your arena</h2></div>
+        <button id="close-search" class="close-btn" aria-label="Close search">×</button>
+      </div>
+      <label class="search-box"><span>⌕</span><input id="search-input" type="search" placeholder="Football, boxing, tennis…" autocomplete="off" /></label>
+      <div id="search-results" class="search-results"></div>
+    </div>
+  </section>
+
+  <section id="help-panel" class="help-panel" aria-hidden="true">
+    <button id="close-help" class="close-btn" aria-label="Close controls help">×</button>
+    <span class="eyebrow">CONTROLS</span>
+    <h2>Explore naturally.</h2>
+    <div class="help-grid">
+      <div><b>Mouse / drag</b><span>Orbit the arena</span></div>
+      <div><b>Scroll / pinch</b><span>Zoom</span></div>
+      <div><b>Hover / tap</b><span>Identify a sport</span></div>
+      <div><b>Click</b><span>Enter the sport zone</span></div>
+    </div>
+  </section>
+
+  <footer class="footer-hud">
+    <span>SAEID SPORTS © 2026</span>
+    <span id="status-text">ARENA ONLINE</span>
+    <span>WEBGL EXPERIENCE</span>
+  </footer>
+
   <script type="module" src="./app.js"></script>
+  <script>
+    window.addEventListener('load',()=>{
+      const sports=[
+        ['Football','Team','⚽'],['Basketball','Team','🏀'],['Volleyball','Team','🏐'],
+        ['Tennis','Racket','🎾'],['Table Tennis','Racket','🏓'],['Badminton','Racket','🏸'],
+        ['Boxing','Combat','🥊'],['Martial Arts','Combat','🥋'],['Wrestling','Combat','🤼'],
+        ['Swimming','Water','🏊'],['Surfing','Water','🏄'],
+        ['Running','Individual','🏃'],['Cycling','Individual','🚴'],['Golf','Individual','⛳'],
+        ['Motorsport','Motorsport','🏎️'],['Gym / Bodybuilding','Strength','🏋️'],['Weightlifting','Strength','🏋️‍♂️'],
+        ['Baseball','Team','⚾'],['American Football','Team','🏈'],['Ice Hockey','Team','🏒'],
+        ['Skiing','Winter','⛷️'],['Snowboarding','Winter','🏂'],
+        ['Skateboarding','Extreme','🛹'],['Archery','Individual','🏹'],['Fencing','Combat','🤺'],['Climbing','Extreme','🧗']
+      ];
+      const strip=document.getElementById('sport-symbol-strip');
+      strip.innerHTML=sports.map(([name,category,icon])=>`<button class="sport-symbol" type="button" data-sport="${name.replace(/"/g,'&quot;')}" data-cat="${category}" aria-label="Open ${name}"><span class="symbol-icon">${icon}</span><span class="symbol-name">${name}</span></button>`).join('');
+
+      const chooseSport=(name)=>{
+        const input=document.getElementById('search-input');
+        if(!input)return;
+        input.value=name;
+        input.dispatchEvent(new Event('input',{bubbles:true}));
+        requestAnimationFrame(()=>{
+          const result=[...document.querySelectorAll('.search-result')].find(b=>b.dataset.name===name);
+          if(result)result.click();
+          input.value='';
+          input.dispatchEvent(new Event('input',{bubbles:true}));
+        });
+      };
+
+      strip.addEventListener('click',e=>{
+        const btn=e.target.closest('.sport-symbol');
+        if(btn)chooseSport(btn.dataset.sport);
+      });
+
+      document.querySelectorAll('.category-chip').forEach(chip=>{
+        chip.addEventListener('click',()=>{
+          const cat=chip.dataset.category;
+          strip.querySelectorAll('.sport-symbol').forEach(btn=>{
+            btn.hidden=cat!=='All'&&btn.dataset.cat!==cat;
+          });
+          strip.scrollTo({left:0,behavior:'smooth'});
+        });
+      });
+
+      const detail=document.getElementById('detail-panel');
+      if(detail){
+        new MutationObserver(()=>strip.classList.toggle('is-hidden',detail.classList.contains('open')))
+          .observe(detail,{attributes:true,attributeFilter:['class']});
+      }
+    });
+  </script>
 </body>
 </html>
