@@ -46,7 +46,7 @@ let cameraTween=null,filterTweens=new Set(),pointerRaf=0,labelsDirty=true;
 const interactive=[],groupsById=new Map(),modelCache=new Map(),assetSearchCache=new Map(),imageCache=new Map();
 const gltfLoader=new GLTFLoader();
 let viewer=null,galleryImages=[],galleryIndex=0,currentTab='overview';
-let centerAthleteGroup=null,centerAthleteMixer=null;
+let centerAthleteGroup=null,centerAthleteMixer=null,centerAthleteModel=null;
 
 function supportsWebGL(){try{const c=document.createElement('canvas');return !!(c.getContext('webgl2',{failIfMajorPerformanceCaveat:false})||c.getContext('webgl',{failIfMajorPerformanceCaveat:false}))}catch{return false}}
 // Start after all module state has initialized (see end of file).
@@ -70,45 +70,73 @@ async function loadCenterAthlete(){
   centerAthleteGroup.name='center-athlete';
   centerAthleteGroup.position.set(0,.31,0);
   arenaGroup.add(centerAthleteGroup);
-  const athleteUrl='./assets/models/center-athlete.glb?v=original-textures-20260920';
+
+  // Keep the stage populated immediately while the real GLB is loading.
+  centerAthleteModel=buildCenterAthleteFallback();
+  centerAthleteModel.name='center-athlete-fallback';
+  centerAthleteGroup.add(centerAthleteModel);
+
+  const key=new THREE.SpotLight(0xffffff,10.5,13,Math.PI*.2,.55,1.2);
+  key.position.set(3.6,7.4,5.2);
+  key.target.position.set(0,1.65,0);
+  key.castShadow=false;
+  centerAthleteGroup.add(key,key.target);
+  const rim=new THREE.PointLight(0x78f000,4.2,6,1.7);
+  rim.position.set(-2.1,2.8,-1.8);
+  centerAthleteGroup.add(rim);
+
+  const liteUrl='./assets/models/center-athlete.glb?v=lite-20260920';
   try{
-    const gltf=await new Promise((resolve,reject)=>gltfLoader.load(athleteUrl,resolve,undefined,reject));
-    const athlete=gltf.scene||gltf.scenes?.[0];
-    if(!athlete)throw new Error('Athlete GLB contains no scene');
-    athlete.traverse(n=>{
-      if(n.isMesh){
-        n.castShadow=true;
-        n.receiveShadow=true;
-        const materials=Array.isArray(n.material)?n.material:[n.material];
-        materials.filter(Boolean).forEach(m=>{
-          if('roughness'in m)m.roughness=Math.min(.72,Math.max(.28,m.roughness??.48));
-          if('metalness'in m)m.metalness=Math.min(.28,m.metalness??.08);
-          m.needsUpdate=true;
-        });
-      }
-    });
-    normalizeObject(athlete,mobile?3.9:4.75);
-    athlete.rotation.y=-.18;athlete.userData.stageAthlete=true;
-    centerAthleteGroup.add(athlete);
-    if(gltf.animations?.length&&!reducedMotion){
-      const sportClip=gltf.animations.find(a=>/run|skate|ride|jump|action/i.test(a.name))||gltf.animations[0];
-      centerAthleteMixer=new THREE.AnimationMixer(athlete);
-      const action=centerAthleteMixer.clipAction(sportClip);
-      action.reset().setLoop(THREE.LoopRepeat,Infinity).play();
-      action.timeScale=.78;
-    }
-    const key=new THREE.SpotLight(0xffffff,10.5,13,Math.PI*.2,.55,1.2);
-    key.position.set(3.6,7.4,5.2);
-    key.target.position.set(0,1.65,0);
-    key.castShadow=false;
-    centerAthleteGroup.add(key,key.target);
-    const rim=new THREE.PointLight(0x78f000,4.2,6,1.7);
-    rim.position.set(-2.1,2.8,-1.8);
-    centerAthleteGroup.add(rim);
+    await replaceCenterAthleteFromUrl(liteUrl,mobile?3.9:4.75,'lite');
   }catch(err){
-    console.warn('Center athlete model fallback',err);
-    centerAthleteGroup.add(buildCenterAthleteFallback());
+    console.warn('Center athlete lite model fallback',err);
   }
+
+  // The 24 MB original is intentionally desktop-only; mobile keeps the fast,
+  // memory-safe model so the center athlete never disappears.
+  if(!mobile){
+    setTimeout(()=>replaceCenterAthleteFromUrl('./assets/models/center-athlete-hq.glb?v=hq-20260920',4.75,'hq').catch(err=>console.warn('Center athlete HQ upgrade skipped',err)),900);
+  }
+}
+async function replaceCenterAthleteFromUrl(url,targetSize,quality){
+  const gltf=await new Promise((resolve,reject)=>gltfLoader.load(url,resolve,undefined,reject));
+  const athlete=gltf.scene||gltf.scenes?.[0];
+  if(!athlete)throw new Error('Athlete GLB contains no scene');
+  athlete.traverse(n=>{
+    if(n.isMesh){
+      n.castShadow=true;
+      n.receiveShadow=true;
+      const materials=Array.isArray(n.material)?n.material:[n.material];
+      materials.filter(Boolean).forEach(m=>{
+        if('roughness'in m)m.roughness=Math.min(.72,Math.max(.28,m.roughness??.48));
+        if('metalness'in m)m.metalness=Math.min(.28,m.metalness??.08);
+        m.needsUpdate=true;
+      });
+    }
+  });
+  normalizeObject(athlete,targetSize);
+  athlete.rotation.y=-.18;
+  athlete.userData.stageAthlete=true;
+  athlete.userData.quality=quality;
+
+  const previous=centerAthleteModel;
+  centerAthleteGroup.add(athlete);
+  centerAthleteModel=athlete;
+  if(previous&&previous!==athlete){
+    centerAthleteGroup.remove(previous);
+    disposeObject(previous);
+  }
+
+  centerAthleteMixer?.stopAllAction?.();
+  centerAthleteMixer=null;
+  if(gltf.animations?.length&&!reducedMotion){
+    const sportClip=gltf.animations.find(a=>/run|skate|ride|jump|action/i.test(a.name))||gltf.animations[0];
+    centerAthleteMixer=new THREE.AnimationMixer(athlete);
+    const action=centerAthleteMixer.clipAction(sportClip);
+    action.reset().setLoop(THREE.LoopRepeat,Infinity).play();
+    action.timeScale=.78;
+  }
+  return athlete;
 }
 function buildCenterAthleteFallback(){
   const g=new THREE.Group(),skin=mat(0xc79070,.05,.62),jersey=mat(0x151b22,.32,.34,0x78f000,.06),shorts=mat(0x090c10,.38,.42),shoe=mat(0xe8eef2,.18,.36),joint=(r,m)=>mesh(new THREE.SphereGeometry(r,22,16),m);
