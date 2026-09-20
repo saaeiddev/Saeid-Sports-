@@ -28,12 +28,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat .modelparts/part-*.gzpart > /tmp/center-athlete.glb.gz
-          gzip -dc /tmp/center-athlete.glb.gz > assets/models/center-athlete.glb
-          echo "51a94baa1c114a327fd68d8cc918b90fcf1316394a1998cfc09524b60e2da8e9  assets/models/center-athlete.glb" | sha256sum -c -
-          test "$(stat -c%s assets/models/center-athlete.glb)" -eq 24612680
+          # Keep the checked-in optimized model for fast/mobile rendering.
+          test -s assets/models/center-athlete.glb
+          # Rebuild the original high-detail model as a separate desktop upgrade.
+          cat .modelparts/part-*.gzpart > /tmp/center-athlete-hq.glb.gz
+          gzip -dc /tmp/center-athlete-hq.glb.gz > assets/models/center-athlete-hq.glb
+          echo "51a94baa1c114a327fd68d8cc918b90fcf1316394a1998cfc09524b60e2da8e9  assets/models/center-athlete-hq.glb" | sha256sum -c -
+          test "$(stat -c%s assets/models/center-athlete-hq.glb)" -eq 24612680
           rm -rf .modelparts
-          rm -f /tmp/center-athlete.glb.gz
+          rm -f /tmp/center-athlete-hq.glb.gz
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
