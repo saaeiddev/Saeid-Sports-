@@ -70,7 +70,7 @@ async function loadCenterAthlete(){
   centerAthleteGroup.name='center-athlete';
   centerAthleteGroup.position.set(0,.31,0);
   arenaGroup.add(centerAthleteGroup);
-  const athleteUrl='https://cdn.3dassets.dev/assets/27172/v1/model.glb';
+  const athleteUrl='./assets/models/center-athlete.glb';
   try{
     const gltf=await new Promise((resolve,reject)=>gltfLoader.load(athleteUrl,resolve,undefined,reject));
     const athlete=gltf.scene||gltf.scenes?.[0];
@@ -87,8 +87,8 @@ async function loadCenterAthlete(){
         });
       }
     });
-    normalizeObject(athlete,mobile?3.55:4.25);
-    athlete.rotation.y=-.28;athlete.userData.stageAthlete=true;
+    normalizeObject(athlete,mobile?3.9:4.75);
+    athlete.rotation.y=-.18;athlete.userData.stageAthlete=true;
     centerAthleteGroup.add(athlete);
     if(gltf.animations?.length&&!reducedMotion){
       const sportClip=gltf.animations.find(a=>/run|skate|ride|jump|action/i.test(a.name))||gltf.animations[0];
