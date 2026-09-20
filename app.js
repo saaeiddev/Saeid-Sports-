@@ -46,6 +46,7 @@ let cameraTween=null,filterTweens=new Set(),pointerRaf=0,labelsDirty=true;
 const interactive=[],groupsById=new Map(),modelCache=new Map(),assetSearchCache=new Map(),imageCache=new Map();
 const gltfLoader=new GLTFLoader();
 let viewer=null,galleryImages=[],galleryIndex=0,currentTab='overview';
+let centerAthleteGroup=null,centerAthleteMixer=null;
 
 function supportsWebGL(){try{const c=document.createElement('canvas');return !!(c.getContext('webgl2',{failIfMajorPerformanceCaveat:false})||c.getContext('webgl',{failIfMajorPerformanceCaveat:false}))}catch{return false}}
 // Start after all module state has initialized (see end of file).
@@ -55,7 +56,7 @@ function init(){
   renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1.1:1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   scene=new THREE.Scene();scene.background=new THREE.Color(0x05070a);scene.fog=new THREE.FogExp2(0x05070a,.0175);camera=new THREE.PerspectiveCamera(47,innerWidth/innerHeight,.1,100);camera.position.set(0,8.4,16.4);clock=new THREE.Clock();raycaster=new THREE.Raycaster();pointer=new THREE.Vector2(10,10);
   controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.065;controls.enablePan=false;controls.minDistance=7.2;controls.maxDistance=25;controls.maxPolarAngle=Math.PI*.5;controls.minPolarAngle=Math.PI*.19;controls.target.set(0,1.1,0);controls.addEventListener('change',()=>labelsDirty=true);
-  arenaGroup=new THREE.Group();sportsGroup=new THREE.Group();scene.add(arenaGroup,sportsGroup);makeLights();makeArena();makeSportsShells();makeParticles();buildSymbolStrip();bindUI();updateLabels();
+  arenaGroup=new THREE.Group();sportsGroup=new THREE.Group();scene.add(arenaGroup,sportsGroup);makeLights();makeArena();loadCenterAthlete();makeSportsShells();makeParticles();buildSymbolStrip();bindUI();updateLabels();
   // Every sport already has a local 3D preview; remote assets upgrade it in the background.
   setProgress(100,'Arena ready');finishBoot();
   SPORTS.filter(s=>s.modelUrl).forEach(s=>loadSportModel(s));animate();logPerformanceLater();
@@ -64,6 +65,67 @@ function makeLights(){scene.add(new THREE.HemisphereLight(0x98bfe0,0x07090c,1.1)
 function mat(color,metal=.5,rough=.35,emissive=0x000000,intensity=.2){return new THREE.MeshStandardMaterial({color,metalness:metal,roughness:rough,emissive,emissiveIntensity:intensity})}
 function mesh(geo,material,pos=[0,0,0],shadow=false){const m=new THREE.Mesh(geo,material);m.position.set(...pos);m.castShadow=shadow;m.receiveShadow=shadow;return m}
 function makeArena(){const floor=mesh(new THREE.CylinderGeometry(15.6,15.6,.26,64),mat(0x0b0e12,.72,.24),[0,-.27,0]);floor.receiveShadow=true;arenaGroup.add(floor);const inner=mesh(new THREE.CylinderGeometry(11.25,11.25,.045,64),mat(0x11161c,.58,.3),[0,-.1,0]);inner.receiveShadow=true;arenaGroup.add(inner);const ring=mesh(new THREE.TorusGeometry(13.25,.045,8,96),new THREE.MeshStandardMaterial({color:0x78f000,emissive:0x78f000,emissiveIntensity:2}),[0,.01,0]);ring.rotation.x=Math.PI/2;arenaGroup.add(ring);const innerRing=mesh(new THREE.TorusGeometry(10.25,.022,7,80),new THREE.MeshStandardMaterial({color:0x244052,emissive:0x193240,emissiveIntensity:.6}),[0,.005,0]);innerRing.rotation.x=Math.PI/2;arenaGroup.add(innerRing);for(let i=0;i<24;i++){const a=i/24*Math.PI*2,r=14.4;arenaGroup.add(mesh(new THREE.BoxGeometry(.07,2.35,.07),mat(i%4===0?0x78f000:0x28323b,.65,.35,i%4===0?0x78f000:0,i%4===0?1.2:.1),[Math.cos(a)*r,.96,Math.sin(a)*r]))}const center=mesh(new THREE.CylinderGeometry(2.15,2.4,.42,48),mat(0x151b22,.72,.23),[0,.06,0]);arenaGroup.add(center);const cr=mesh(new THREE.TorusGeometry(2.1,.048,8,72),new THREE.MeshStandardMaterial({color:0x78f000,emissive:0x78f000,emissiveIntensity:2.6}),[0,.31,0]);cr.rotation.x=Math.PI/2;arenaGroup.add(cr);const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=256;const ctx=canvas.getContext('2d');ctx.fillStyle='#78f000';ctx.font='900 118px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('SAEID SPORTS',512,130);const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;arenaGroup.add(mesh(new THREE.PlaneGeometry(8,2),new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:.92}),[0,4.7,-12.75]))}
+async function loadCenterAthlete(){
+  centerAthleteGroup=new THREE.Group();
+  centerAthleteGroup.name='center-athlete';
+  centerAthleteGroup.position.set(0,.31,0);
+  arenaGroup.add(centerAthleteGroup);
+  const athleteUrl='https://cdn.3dassets.dev/assets/32901/v1/model.glb';
+  try{
+    const gltf=await new Promise((resolve,reject)=>gltfLoader.load(athleteUrl,resolve,undefined,reject));
+    const athlete=gltf.scene||gltf.scenes?.[0];
+    if(!athlete)throw new Error('Athlete GLB contains no scene');
+    athlete.traverse(n=>{
+      if(n.isMesh){
+        n.castShadow=true;
+        n.receiveShadow=true;
+        const materials=Array.isArray(n.material)?n.material:[n.material];
+        materials.filter(Boolean).forEach(m=>{
+          if('roughness'in m)m.roughness=Math.min(.72,Math.max(.28,m.roughness??.48));
+          if('metalness'in m)m.metalness=Math.min(.28,m.metalness??.08);
+          m.needsUpdate=true;
+        });
+      }
+    });
+    normalizeObject(athlete,mobile?2.75:3.2);
+    athlete.rotation.y=.08;
+    centerAthleteGroup.add(athlete);
+    if(gltf.animations?.length&&!reducedMotion){
+      const runClip=gltf.animations.find(a=>/run/i.test(a.name))||gltf.animations.find(a=>/idle/i.test(a.name))||gltf.animations[0];
+      centerAthleteMixer=new THREE.AnimationMixer(athlete);
+      const action=centerAthleteMixer.clipAction(runClip);
+      action.reset().setLoop(THREE.LoopRepeat,Infinity);
+      action.timeScale=/run/i.test(runClip.name)?0.58:0.82;
+      action.play();
+    }
+    const key=new THREE.SpotLight(0xffffff,10.5,13,Math.PI*.2,.55,1.2);
+    key.position.set(3.6,7.4,5.2);
+    key.target.position.set(0,1.65,0);
+    key.castShadow=false;
+    centerAthleteGroup.add(key,key.target);
+    const rim=new THREE.PointLight(0x78f000,4.2,6,1.7);
+    rim.position.set(-2.1,2.8,-1.8);
+    centerAthleteGroup.add(rim);
+  }catch(err){
+    console.warn('Center athlete model fallback',err);
+    centerAthleteGroup.add(buildCenterAthleteFallback());
+  }
+}
+function buildCenterAthleteFallback(){
+  const g=new THREE.Group(),skin=mat(0xc79070,.05,.62),jersey=mat(0x151b22,.32,.34,0x78f000,.06),shorts=mat(0x090c10,.38,.42),shoe=mat(0xe8eef2,.18,.36),joint=(r,m)=>mesh(new THREE.SphereGeometry(r,22,16),m);
+  const torso=mesh(new THREE.CapsuleGeometry(.42,.72,8,22),jersey,[0,1.82,0],true);torso.scale.set(1,.92,.62);g.add(torso);
+  g.add(joint(.31,skin));g.children[g.children.length-1].position.set(0,2.72,0);
+  const limb=(a,b,r,m)=>{const d=b.clone().sub(a),mid=a.clone().add(b).multiplyScalar(.5),c=mesh(new THREE.CylinderGeometry(r*.86,r,Math.max(.01,d.length()),14),m,mid.toArray(),true);c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());g.add(c);return c};
+  const V=THREE.Vector3;
+  limb(new V(-.35,2.25,0),new V(-.92,1.7,.18),.14,skin);limb(new V(-.92,1.7,.18),new V(-.7,1.08,.45),.12,skin);
+  limb(new V(.35,2.25,0),new V(.82,2.5,-.2),.14,skin);limb(new V(.82,2.5,-.2),new V(1.04,1.95,-.38),.12,skin);
+  limb(new V(-.2,1.28,0),new V(-.48,.66,.23),.19,skin);limb(new V(-.48,.66,.23),new V(-.22,.05,.5),.16,skin);
+  limb(new V(.2,1.28,0),new V(.55,.72,-.18),.19,skin);limb(new V(.55,.72,-.18),new V(.92,.18,-.3),.16,skin);
+  const leftShoe=mesh(new THREE.BoxGeometry(.3,.16,.62),shoe,[-.16,.05,.72],true);leftShoe.rotation.y=.12;
+  const rightShoe=mesh(new THREE.BoxGeometry(.3,.16,.62),shoe,[.98,.17,-.55],true);rightShoe.rotation.y=-.35;
+  const hip=mesh(new THREE.BoxGeometry(.72,.42,.5),shorts,[0,1.25,0],true);g.add(hip,leftShoe,rightShoe);
+  normalizeObject(g,mobile?2.65:3.05);return g;
+}
 function makeParticles(){const n=mobile?80:190,pos=new Float32Array(n*3);for(let i=0;i<n;i++){const r=8+Math.random()*18,a=Math.random()*Math.PI*2;pos[i*3]=Math.cos(a)*r;pos[i*3+1]=Math.random()*7.5;pos[i*3+2]=Math.sin(a)*r}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));particles=new THREE.Points(geo,new THREE.PointsMaterial({size:.018,color:0x91a5b5,transparent:true,opacity:.23,depthWrite:false}));scene.add(particles)}
 function makeSportsShells(){const layer=$('#sport-label-layer');SPORTS.forEach((s,i)=>{const a=i/SPORTS.length*Math.PI*2-.44,r=i%2?10.65:12.55,g=new THREE.Group();g.position.set(Math.cos(a)*r,.72,Math.sin(a)*r);g.userData={sport:s,home:g.position.clone(),loaded:false,modelSource:'loading',filtered:false};const podium=mesh(new THREE.CylinderGeometry(.95,1.13,.24,28),mat(0x121820,.72,.23),[0,-.56,0]);podium.receiveShadow=true;const glow=mesh(new THREE.TorusGeometry(.91,.033,7,48),new THREE.MeshStandardMaterial({color:s.accent,emissive:s.accent,emissiveIntensity:2.15}),[0,-.43,0]);glow.rotation.x=Math.PI/2;const content=new THREE.Group();content.name='content';content.position.y=.05;const hit=mesh(new THREE.SphereGeometry(1.12,10,7),new THREE.MeshBasicMaterial(),[0,.08,0]);hit.material.visible=false;hit.userData.isHitbox=true;hit.userData.parentSport=g;g.add(podium,glow,content,hit);interactive.push(hit);sportsGroup.add(g);groupsById.set(s.id,g);const label=document.createElement('div');label.className='arena-label';label.dataset.sport=s.id;label.innerHTML=`${escapeHtml(s.name.toUpperCase())}<small>${escapeHtml(CATEGORY_LABELS[s.category]||s.category.toUpperCase())}</small>`;layer.appendChild(label);g.userData.label=label;setProceduralFallback(g,s,'loading')})}
 function setProceduralFallback(group,s,reason='failed'){const content=group.getObjectByName('content');clearGroup(content);content.add(buildIcon(s));group.userData.modelSource=reason==='loading'?'preview':'procedural fallback';group.userData.loaded=reason!=='loading'}
@@ -122,7 +184,7 @@ function toggleSound(){soundOn=!soundOn;$('#sound-toggle').textContent=soundOn?'
 function playUi(vol=.02,f=360){if(!soundOn)return;audioCtx??=new(window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.setValueAtTime(f,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(f*.74,audioCtx.currentTime+.08);g.gain.setValueAtTime(vol,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.1);o.connect(g).connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.11)}
 function updateLabels(){labelsDirty=false;const w=innerWidth,h=innerHeight,tmp=new THREE.Vector3();SPORTS.forEach(s=>{const g=groupsById.get(s.id),el=g.userData.label;if(!g.visible||g.userData.filtered){el.style.opacity='0';return}tmp.copy(g.position);tmp.y+=2.25;tmp.project(camera);if(tmp.z>1||tmp.z<-1){el.style.opacity='0';return}const x=(tmp.x*.5+.5)*w,y=(-tmp.y*.5+.5)*h;el.style.left=x+'px';el.style.top=y+'px';el.style.opacity=(x<45||x>w-45||y<65||y>h-35)?'0':'1'})}
 function onResize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<=900?1.1:1.5));labelsDirty=true}
-let animating=false,lastFrame=0;function animate(){if(animating||paused||document.hidden)return;animating=true;const loop=time=>{if(paused||document.hidden){animating=false;return}requestAnimationFrame(loop);const minGap=mobile?20:0;if(minGap&&time-lastFrame<minGap)return;lastFrame=time;const dt=Math.min(clock.getDelta(),.05);updateCameraTween(time);updateFilterTweens(time);if(selectedGroup?.userData.mixer)selectedGroup.userData.mixer.update(dt);if(!reducedMotion&&particles)particles.rotation.y+=dt*.006;controls.update();if(labelsDirty)updateLabels();renderer.render(scene,camera)};requestAnimationFrame(loop)}
+let animating=false,lastFrame=0;function animate(){if(animating||paused||document.hidden)return;animating=true;const loop=time=>{if(paused||document.hidden){animating=false;return}requestAnimationFrame(loop);const minGap=mobile?20:0;if(minGap&&time-lastFrame<minGap)return;lastFrame=time;const dt=Math.min(clock.getDelta(),.05);updateCameraTween(time);updateFilterTweens(time);centerAthleteMixer?.update(dt);if(selectedGroup?.userData.mixer)selectedGroup.userData.mixer.update(dt);if(!reducedMotion&&particles)particles.rotation.y+=dt*.006;controls.update();if(labelsDirty)updateLabels();renderer.render(scene,camera)};requestAnimationFrame(loop)}
 function logPerformanceLater(){setTimeout(()=>{if(renderer)console.info('[SAEID SPORTS perf]',{drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),sports:SPORTS.length})},6000)}
 function escapeHtml(v){return String(v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]))}function escapeAttr(v){return escapeHtml(v)}
 
