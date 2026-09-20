@@ -92,11 +92,13 @@ async function loadCenterAthlete(){
     console.warn('Center athlete lite model fallback',err);
   }
 
-  // The 24 MB original is intentionally desktop-only; mobile keeps the fast,
-  // memory-safe model so the center athlete never disappears.
-  if(!mobile){
-    setTimeout(()=>replaceCenterAthleteFromUrl('./assets/models/center-athlete-hq.glb?v=hq-20260920',4.75,'hq').catch(err=>console.warn('Center athlete HQ upgrade skipped',err)),900);
-  }
+  // Upgrade to the original texture-complete athlete on every device.
+  // The lite model is only a fast first paint; the HQ GLB owns the final materials/textures.
+  replaceCenterAthleteFromUrl(
+    './assets/models/center-athlete-hq.glb?v=hq-textures-20260920b',
+    mobile?3.9:4.75,
+    'hq'
+  ).catch(err=>console.warn('Center athlete HQ texture upgrade skipped',err));
 }
 async function replaceCenterAthleteFromUrl(url,targetSize,quality){
   const gltf=await new Promise((resolve,reject)=>gltfLoader.load(url,resolve,undefined,reject));
