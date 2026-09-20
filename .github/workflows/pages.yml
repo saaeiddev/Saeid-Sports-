@@ -23,6 +23,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Restore original athlete model
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .modelparts/part-*.gzpart > /tmp/center-athlete.glb.gz
+          gzip -dc /tmp/center-athlete.glb.gz > assets/models/center-athlete.glb
+          echo "51a94baa1c114a327fd68d8cc918b90fcf1316394a1998cfc09524b60e2da8e9  assets/models/center-athlete.glb" | sha256sum -c -
+          test "$(stat -c%s assets/models/center-athlete.glb)" -eq 24612680
+          rm -rf .modelparts
+          rm -f /tmp/center-athlete.glb.gz
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload static site
