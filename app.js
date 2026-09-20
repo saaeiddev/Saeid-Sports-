@@ -70,7 +70,7 @@ async function loadCenterAthlete(){
   centerAthleteGroup.name='center-athlete';
   centerAthleteGroup.position.set(0,.31,0);
   arenaGroup.add(centerAthleteGroup);
-  const athleteUrl='./assets/models/center-athlete.glb';
+  const athleteUrl='./assets/models/center-athlete.glb?v=original-textures-20260920';
   try{
     const gltf=await new Promise((resolve,reject)=>gltfLoader.load(athleteUrl,resolve,undefined,reject));
     const athlete=gltf.scene||gltf.scenes?.[0];
