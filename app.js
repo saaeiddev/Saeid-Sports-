@@ -70,7 +70,7 @@ async function loadCenterAthlete(){
   centerAthleteGroup.name='center-athlete';
   centerAthleteGroup.position.set(0,.31,0);
   arenaGroup.add(centerAthleteGroup);
-  const athleteUrl='https://cdn.3dassets.dev/assets/32901/v1/model.glb';
+  const athleteUrl='https://cdn.3dassets.dev/assets/27172/v1/model.glb';
   try{
     const gltf=await new Promise((resolve,reject)=>gltfLoader.load(athleteUrl,resolve,undefined,reject));
     const athlete=gltf.scene||gltf.scenes?.[0];
@@ -87,16 +87,15 @@ async function loadCenterAthlete(){
         });
       }
     });
-    normalizeObject(athlete,mobile?2.75:3.2);
-    athlete.rotation.y=.08;
+    normalizeObject(athlete,mobile?3.55:4.25);
+    athlete.rotation.y=-.28;athlete.userData.stageAthlete=true;
     centerAthleteGroup.add(athlete);
     if(gltf.animations?.length&&!reducedMotion){
-      const runClip=gltf.animations.find(a=>/run/i.test(a.name))||gltf.animations.find(a=>/idle/i.test(a.name))||gltf.animations[0];
+      const sportClip=gltf.animations.find(a=>/run|skate|ride|jump|action/i.test(a.name))||gltf.animations[0];
       centerAthleteMixer=new THREE.AnimationMixer(athlete);
-      const action=centerAthleteMixer.clipAction(runClip);
-      action.reset().setLoop(THREE.LoopRepeat,Infinity);
-      action.timeScale=/run/i.test(runClip.name)?0.58:0.82;
-      action.play();
+      const action=centerAthleteMixer.clipAction(sportClip);
+      action.reset().setLoop(THREE.LoopRepeat,Infinity).play();
+      action.timeScale=.78;
     }
     const key=new THREE.SpotLight(0xffffff,10.5,13,Math.PI*.2,.55,1.2);
     key.position.set(3.6,7.4,5.2);
@@ -124,7 +123,7 @@ function buildCenterAthleteFallback(){
   const leftShoe=mesh(new THREE.BoxGeometry(.3,.16,.62),shoe,[-.16,.05,.72],true);leftShoe.rotation.y=.12;
   const rightShoe=mesh(new THREE.BoxGeometry(.3,.16,.62),shoe,[.98,.17,-.55],true);rightShoe.rotation.y=-.35;
   const hip=mesh(new THREE.BoxGeometry(.72,.42,.5),shorts,[0,1.25,0],true);g.add(hip,leftShoe,rightShoe);
-  normalizeObject(g,mobile?2.65:3.05);return g;
+  normalizeObject(g,mobile?3.45:4.05);return g;
 }
 function makeParticles(){const n=mobile?80:190,pos=new Float32Array(n*3);for(let i=0;i<n;i++){const r=8+Math.random()*18,a=Math.random()*Math.PI*2;pos[i*3]=Math.cos(a)*r;pos[i*3+1]=Math.random()*7.5;pos[i*3+2]=Math.sin(a)*r}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));particles=new THREE.Points(geo,new THREE.PointsMaterial({size:.018,color:0x91a5b5,transparent:true,opacity:.23,depthWrite:false}));scene.add(particles)}
 function makeSportsShells(){const layer=$('#sport-label-layer');SPORTS.forEach((s,i)=>{const a=i/SPORTS.length*Math.PI*2-.44,r=i%2?10.65:12.55,g=new THREE.Group();g.position.set(Math.cos(a)*r,.72,Math.sin(a)*r);g.userData={sport:s,home:g.position.clone(),loaded:false,modelSource:'loading',filtered:false};const podium=mesh(new THREE.CylinderGeometry(.95,1.13,.24,28),mat(0x121820,.72,.23),[0,-.56,0]);podium.receiveShadow=true;const glow=mesh(new THREE.TorusGeometry(.91,.033,7,48),new THREE.MeshStandardMaterial({color:s.accent,emissive:s.accent,emissiveIntensity:2.15}),[0,-.43,0]);glow.rotation.x=Math.PI/2;const content=new THREE.Group();content.name='content';content.position.y=.05;const hit=mesh(new THREE.SphereGeometry(1.12,10,7),new THREE.MeshBasicMaterial(),[0,.08,0]);hit.material.visible=false;hit.userData.isHitbox=true;hit.userData.parentSport=g;g.add(podium,glow,content,hit);interactive.push(hit);sportsGroup.add(g);groupsById.set(s.id,g);const label=document.createElement('div');label.className='arena-label';label.dataset.sport=s.id;label.innerHTML=`${escapeHtml(s.name.toUpperCase())}<small>${escapeHtml(CATEGORY_LABELS[s.category]||s.category.toUpperCase())}</small>`;layer.appendChild(label);g.userData.label=label;setProceduralFallback(g,s,'loading')})}
@@ -184,7 +183,7 @@ function toggleSound(){soundOn=!soundOn;$('#sound-toggle').textContent=soundOn?'
 function playUi(vol=.02,f=360){if(!soundOn)return;audioCtx??=new(window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.setValueAtTime(f,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(f*.74,audioCtx.currentTime+.08);g.gain.setValueAtTime(vol,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.1);o.connect(g).connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.11)}
 function updateLabels(){labelsDirty=false;const w=innerWidth,h=innerHeight,tmp=new THREE.Vector3();SPORTS.forEach(s=>{const g=groupsById.get(s.id),el=g.userData.label;if(!g.visible||g.userData.filtered){el.style.opacity='0';return}tmp.copy(g.position);tmp.y+=2.25;tmp.project(camera);if(tmp.z>1||tmp.z<-1){el.style.opacity='0';return}const x=(tmp.x*.5+.5)*w,y=(-tmp.y*.5+.5)*h;el.style.left=x+'px';el.style.top=y+'px';el.style.opacity=(x<45||x>w-45||y<65||y>h-35)?'0':'1'})}
 function onResize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<=900?1.1:1.5));labelsDirty=true}
-let animating=false,lastFrame=0;function animate(){if(animating||paused||document.hidden)return;animating=true;const loop=time=>{if(paused||document.hidden){animating=false;return}requestAnimationFrame(loop);const minGap=mobile?20:0;if(minGap&&time-lastFrame<minGap)return;lastFrame=time;const dt=Math.min(clock.getDelta(),.05);updateCameraTween(time);updateFilterTweens(time);centerAthleteMixer?.update(dt);if(selectedGroup?.userData.mixer)selectedGroup.userData.mixer.update(dt);if(!reducedMotion&&particles)particles.rotation.y+=dt*.006;controls.update();if(labelsDirty)updateLabels();renderer.render(scene,camera)};requestAnimationFrame(loop)}
+let animating=false,lastFrame=0;function animate(){if(animating||paused||document.hidden)return;animating=true;const loop=time=>{if(paused||document.hidden){animating=false;return}requestAnimationFrame(loop);const minGap=mobile?20:0;if(minGap&&time-lastFrame<minGap)return;lastFrame=time;const dt=Math.min(clock.getDelta(),.05);updateCameraTween(time);updateFilterTweens(time);centerAthleteMixer?.update(dt);if(centerAthleteGroup&&!reducedMotion){centerAthleteGroup.rotation.y=Math.sin(time*.00045)*.09;centerAthleteGroup.position.y=.31+Math.sin(time*.0015)*.018}if(selectedGroup?.userData.mixer)selectedGroup.userData.mixer.update(dt);if(!reducedMotion&&particles)particles.rotation.y+=dt*.006;controls.update();if(labelsDirty)updateLabels();renderer.render(scene,camera)};requestAnimationFrame(loop)}
 function logPerformanceLater(){setTimeout(()=>{if(renderer)console.info('[SAEID SPORTS perf]',{drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),sports:SPORTS.length})},6000)}
 function escapeHtml(v){return String(v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]))}function escapeAttr(v){return escapeHtml(v)}
 
